@@ -1,0 +1,57 @@
+<!doctype html>
+<html lang="en" x-data="data()" x-init="start()">
+<body>
+  <a style="visibility: hidden; display: none;" rel="me" href="https://mastodon.social/@azureshit">Mastodon</a>
+
+  <script>
+    async function main() {
+
+      let segments = [];
+      const path = window.location.href.replace("://", "");
+      if (path.includes("?")) {
+        segments = window.location.href.split("?");
+      } else if (path.includes("#")) {
+        segments = window.location.href.split("#");
+      } else if (path.includes("/")) {
+        segments = window.location.href.split("/");
+      }
+      let day = segments[segments.length - 1];
+      if (!isNumeric(day)) {
+        redirect();
+      }
+
+      let next = "https://mastodon.social/api/v1/accounts/109941977618230197/statuses?limit=40";
+      while (next != null) {
+        const res = await axios.get(next);
+
+        for (const post of res.data) {
+          if (post.content.startsWith(`<p>Day ${day}.`)) {
+            redirect(post.url);
+            return;
+          }
+        }
+
+        let linkHeader = res.headers.get("link");
+        if (linkHeader.includes("rel=\"next\"")) {
+          next = linkHeader.split(";")[0].replace("<", "").replace(">", "");
+        } else {
+          next = null;
+        }
+      }
+      
+      redirect();
+    }
+
+    function redirect(target = "https://mastodon.social/@azureshit") {
+      console.log("Redirecting to " + target);
+      window.location.replace(target);
+    }
+
+    function isNumeric(value) {
+      return /^-?\d+$/.test(value);
+    }
+
+    main();
+  </script>
+</body>
+</html>
